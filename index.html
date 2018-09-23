@@ -39,7 +39,7 @@
     <label for="files" class="custom-file-upload">
         <i class="fa fa-cloud-upload"></i> Load files
     </label>
-    <input type="file" id="files" accept=".svg" multiple="true" onloadeddata="loaded()"/>
+    <input type="file" id="files" accept=".svg" multiple="true"/>
     <label for="parse" class="custom-file-upload">
         <i class="fa fa-cloud-upload"></i> Parse and save
     </label>
@@ -69,11 +69,11 @@
         }
     }
 
-    var pathList = [];
-    var root = new Root();
-    var names = [];
-
     function readBlob() {
+
+        var names = [];
+        var root = new Root();
+
         var files = document.getElementById('files').files;
     
         if (!files.length) {
@@ -113,6 +113,7 @@
                     }
 
                     var paths = xmlDoc.getElementsByTagName("path");
+                    var pathList = [];
                     for (var index = 0, path; path = paths[index]; index++) {
                         var d = path.getAttribute("d");
                         if(d != null){
@@ -160,12 +161,19 @@
                         if(path.fill != null){
                             node.setAttribute("android:fillColor", path.fill);
                         }
+                        else{
+                            node.setAttribute("android:fillColor", "#000");
+                        }
+
                         node.setAttribute("android:pathData", path.d);
                         vector[0].appendChild(node);
                     });
 
+
                     var s = new XMLSerializer();
                     var xmlString = s.serializeToString( xmlDoc );
+
+                    //split text by '>' for add after new line
                     var xmlList = xmlString.split('>');
                     var parsedXml = "";
 
@@ -174,12 +182,12 @@
                     }
 
                     var fileBlob = new Blob([parsedXml], {type: "text/xml"});
+
                     var anchor = document.createElement("a");
                     anchor.download = names.shift();
                     anchor.href = (window.webkitURL || window.URL).createObjectURL(fileBlob);
                     anchor.dataset.downloadurl = ['text/xml', anchor.download, anchor.href].join(':');
                     anchor.click();
-                    document.getElementById('byte_content').textContent += pathList[i].d + " | " + pathList[i].fill + " | " + pathList[i].id + "\n";
                 }
             }
             reader.readAsBinaryString(file);
@@ -188,10 +196,15 @@
 
     function handleFileSelect(evt) {
         var files = evt.target.files;
-
+        document.getElementById('byte_content').textContent = "";
         var output = [];
         for (var i = 0, f; f = files[i]; i++) {
-            output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ')', '</li>');
+            if(f.type == "image/svg+xml"){
+                output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ')', '</li>');
+            }
+            else{
+                alert("Please, choose only svg files!")
+            }
         }
 
         document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
